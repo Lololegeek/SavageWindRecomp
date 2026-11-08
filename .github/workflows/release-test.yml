@@ -56,7 +56,7 @@ jobs:
 
           - Frame rate: 144, 165, 180, 200, 240, 280, 300, 360; 480 / 540 / 720 with Frame generation.
           - Upscaler mode Native AA (FSR 3.1 / FSR 4 as anti-aliasing at full resolution).
-          - FSR 3.1 / FSR 4 upscaling is held back by default as on test: start with SAVAGEWIND_FSR3=1 to offer it.
+          - FSR 3.1 / FSR 4 upscaling is held back by default: Video > "AMD FSR 3 and FSR 4 upscaling (test)" offers it (or SAVAGEWIND_FSR3=1).
           - Updater: Update Savage Wind.bat in the folder (docs/UPDATING.md). Over an existing install: extract this zip over it, or run the .bat.
           "@
           gh release create $env:GITHUB_REF_NAME $zip.FullName --prerelease --title "Test $env:GITHUB_REF_NAME" --notes $notes
