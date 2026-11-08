@@ -162,11 +162,12 @@ void settings_load(void) {
         else if (!strcmp(key, "settings_version")) version = atoi(val);
         else if (!strcmp(key, "resolution")) snprintf(old_res, sizeof old_res, "%s", val);  // (version 1)
         else if (!strcmp(key, "upscaler"))  // (metalfx / fsr1: this OS's spatial upscaler; fsr3, fsr4: Vulkan, FSR 1
-            // with the same quality mode when SAVAGEWIND_FSR3=0, nvn/output_scale.c fsr3_upscaler_enabled; dlss: not yet)
+            // with the same quality mode when they're not offered, below the loop; dlss: not yet)
             g_settings.upscaler = !strcmp(val, "fsr1") || !strcmp(val, "metalfx") ? UPSCALE_SPATIAL
-                                : !strcmp(val, "fsr3") ? (fsr3_upscaler_enabled() ? UPSCALE_FSR3_OR_SPATIAL : UPSCALE_SPATIAL)
-                                : !strcmp(val, "fsr4") ? (fsr3_upscaler_enabled() ? UPSCALE_FSR4_OR_SPATIAL : UPSCALE_SPATIAL)
+                                : !strcmp(val, "fsr3") ? UPSCALE_FSR3_OR_SPATIAL
+                                : !strcmp(val, "fsr4") ? UPSCALE_FSR4_OR_SPATIAL
                                                        : UPSCALE_OFF;
+        else if (!strcmp(key, "fsr3_upscaling")) g_settings.fsr3_upscaling = atoi(val) != 0;
         else if (!strcmp(key, "upscaler_quality")) {
             for (int i = 0; i < UPQ_COUNT; i++)
                 if (!strcmp(val, k_quality[i])) g_settings.upscale_quality = i;
@@ -289,6 +290,10 @@ void settings_load(void) {
         else bind_settings_load(key, val);  // bind_pad_* / bind_key_*: runtime/hle/bindings.c
     }
     fclose(f);
+    // FSR 3 / FSR 4 upscaling not offered (nvn/output_scale.c fsr3_upscaler_enabled: the setting is read above, in any
+    // order): FSR 1 with the same mode
+    if ((g_settings.upscaler == UPSCALE_FSR3 || g_settings.upscaler == UPSCALE_FSR4) && !fsr3_upscaler_enabled())
+        g_settings.upscaler = UPSCALE_SPATIAL;
     if (version < 2) {
         // internal resolution: a share of the display is now the upscaler's nearest mode (75%: Ultra Quality,
         // 1 / 1.3; 50% and 25%: Performance, 1 / 2); the upscaler itself is kept (bilinear: Off)
@@ -383,6 +388,7 @@ void settings_save(void) {
     int u = g_settings.upscaler, uq = g_settings.upscale_quality;
     fprintf(f, "upscaler = %s\n", u >= 0 && u < UPSCALE_COUNT ? ups[u] : "off");
     fprintf(f, "upscaler_quality = %s\n", k_quality[uq >= 0 && uq < UPQ_COUNT ? uq : UPQ_QUALITY]);
+    fprintf(f, "fsr3_upscaling = %d\n", g_settings.fsr3_upscaling ? 1 : 0);
     {
         static const int rs[RSCALE_COUNT] = {50, 75, 100, 125, 150, 200};
         int r = g_settings.render_scale;
