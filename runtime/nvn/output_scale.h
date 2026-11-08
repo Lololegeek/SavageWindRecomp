@@ -19,7 +19,7 @@ void output_scale_screen(double sw, double sh, int iw, int ih, OutScale *o);
 // = window / factor per axis), and the factor in use (1: Off)
 bool upscaler_available(int u);
 bool fsr4_offered(void);  // AMD FSR 4 usable on this PC (an AMD Radeon and AMD's DLLs; held back or not)
-bool fsr3_upscaler_enabled(void);  // FSR 3 upscaling offered (held back for now; SAVAGEWIND_FSR3=1)
+bool fsr3_upscaler_enabled(void);  // FSR 3.1 upscaling offered (on; SAVAGEWIND_FSR3=0 hides it)
 // The world camera's projection as last made (rt_persp, game thread): tan(fovy / 2), aspect, near, far; zeros before
 void rt_world_projection(float out[4]);
 // The scene's render size in pixels (vulkan/exec.c: its motion target), for the jitter's sub-pixel offsets
@@ -33,6 +33,7 @@ bool rt_temporal(void);  // TAA or FSR 3: motion vectors and the jitter on (vulk
 void rt_jitter_set_phases(uint32_t n);  // (FSR 3: the jitter sequence's length, fsr3_jitter_phases)
 bool upscale_modes_available(void);  // (rendering below the window's size: needs render-target scaling)
 double upscale_mode_factor(int q);
+bool upscale_mode_available(int u, int q);  // (Native AA only with FSR 3.1 / FSR 4)
 double upscale_factor(void);
 // Video > Shadow resolution: the width the game's shadow maps are made at from presented frame `frame` on (0: their
 // own size; vulkan/textures.c RS_SHADOW)

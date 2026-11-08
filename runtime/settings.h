@@ -21,7 +21,8 @@ enum { UPSCALE_OFF = 0, UPSCALE_METALFX = 1 /* macOS */, UPSCALE_FSR1 = 2 /* AMD
 #endif
 // quality modes, AMD's scale factors (per axis): Ultra Quality 1.3, Quality 1.5, Balanced 1.7, Performance 2.0,
 // Ultra Performance 3.0
-enum { UPQ_ULTRA = 0, UPQ_QUALITY = 1, UPQ_BALANCED = 2, UPQ_PERFORMANCE = 3, UPQ_ULTRA_PERFORMANCE = 4, UPQ_COUNT };
+enum { UPQ_ULTRA = 0, UPQ_QUALITY = 1, UPQ_BALANCED = 2, UPQ_PERFORMANCE = 3, UPQ_ULTRA_PERFORMANCE = 4,
+       UPQ_NATIVE = 5 /* Native AA: FSR 3.1 / FSR 4 at full resolution, anti-aliasing only */, UPQ_COUNT };
 // TAA (Vulkan): the game's own motion vectors (vulkan/mvec.c) and a jittered camera (output_scale.c rt_jitter_on)
 // blend each frame with the ones before it (vulkan/exec.c mvec_taa)
 enum { AA_OFF = 0, AA_SMAA = 1, AA_TAA = 2 };
@@ -40,7 +41,9 @@ enum { PERF_OFF = 0, PERF_FPS = 1, PERF_FULL = 2 };
 // Frame rate (Video > Frame rate; runtime/hle/framepace.c): frames per second, 0 = no limit. The game's clock is the
 // same at every rate. The console runs the game at 30.
 #define FPS_DEFAULT 60
-#define FPS_CHOICES {0, 30, 60, 90, 120, 144, 165, 240, 360}
+// Above 360 the game itself still draws at most 360 (runtime/hle/framepace.c FPS_CEILING): the higher rates are for
+// frame generation, which presents two frames for each one the game draws (480 = 240 drawn + 240 generated).
+#define FPS_CHOICES {0, 30, 60, 75, 90, 100, 120, 144, 165, 180, 200, 240, 280, 300, 360, 480, 540, 720}
 // VSync (Video > VSync; runtime/nvn/vulkan/device.c picks the present mode): On waits for the display (FIFO; with
 // G-SYNC / FreeSync the display waits for the game instead), Fast shows the newest frame at each refresh (MAILBOX),
 // Adaptive is On but shows a late frame at once (FIFO_RELAXED), Off shows each frame at once (IMMEDIATE). With On and
@@ -175,5 +178,5 @@ extern Settings g_settings;
 void settings_load(void);
 void settings_save(void);
 // Frame rate > Match display: fps_limit becomes the highest offered rate the display (hz) can show, at least 30 (a
-// 280 Hz display: 240; a 60 Hz one: 60). Nothing with another rate chosen or hz unknown (runtime/window_size.c).
+// 250 Hz display: 240; a 60 Hz one: 60). Nothing with another rate chosen or hz unknown (runtime/window_size.c).
 void settings_fps_for_display(float hz);

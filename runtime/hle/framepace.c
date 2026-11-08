@@ -233,7 +233,10 @@ volatile int g_fg_active;  // (vulkan/device.c: the last frame was generated)
 
 uint64_t framepace_period_ns(void) {
     int target = framepace_target();
-    double fps = target > 0 ? target : FPS_CEILING, cap = vsync_cap();
+    // (with frame generation the presented rate may go to twice the ceiling: the game still draws at most FPS_CEILING)
+    double ceiling = g_fg_active ? 2.0 * FPS_CEILING : FPS_CEILING;
+    double fps = target > 0 ? target : ceiling, cap = vsync_cap();
+    if (fps > ceiling) fps = ceiling;
     if (cap > 0 && fps > cap) fps = cap;
     return (uint64_t)((g_fg_active ? 2e9 : 1e9) / on_refresh(fps) + 0.5);
 }

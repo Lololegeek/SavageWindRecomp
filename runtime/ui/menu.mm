@@ -627,7 +627,8 @@ extern "C" void renderer_get_scene_scale(float *sx, float *sy);
 extern "C" bool renderer_gpu_rtx(void);  // (vulkan/device.c, metal.m)
 extern "C" volatile int g_fg_active;     // (hle/framepace.c: the last presented frame was generated)
 // Video > Upscaler mode's names, by UPQ_*
-static const char *const k_upscale_modes[UPQ_COUNT] = {"Ultra Quality", "Quality", "Balanced", "Performance", "Ultra Performance"};
+static const char *const k_upscale_modes[UPQ_COUNT] = {"Ultra Quality", "Quality", "Balanced", "Performance", "Ultra Performance",
+                                                         "Native AA"};
 extern "C" {
 #include "../nvn/output_scale.h"
 }
@@ -858,6 +859,8 @@ static void tab_display(void) {
                                            "pictures, and one that divides it evenly is the smoothest."), hz);
             desc += std::string("\n\n") + line;
         }
+        desc += std::string("\n\n") + tr("Above 360 FPS: with Frame generation only (the game itself draws at most "
+                                         "360 a second, the generated frames make up the rest).");
         if (opt_choice("Frame rate", &cur, names, NF + 1, def, desc.c_str(), false)) {
             g_settings.fps_display = cur == NF;
             if (g_settings.fps_display) settings_fps_for_display(winsize_refresh_rate());
@@ -924,7 +927,8 @@ static void tab_display(void) {
                         "following the game's motion: sharper and steadier than FSR 1, and anti-aliased (Anti-aliasing "
                         "has no effect with it). Sharpening sets its own sharpening. NVIDIA DLSS (NVIDIA RTX graphics "
                         "cards) is coming in a later version.")
-                   : tr("AMD FSR 3 and NVIDIA DLSS (NVIDIA RTX graphics cards) are coming in a later version."));
+                   : tr("AMD FSR 3 is turned off (SAVAGEWIND_FSR3=0). NVIDIA DLSS (NVIDIA RTX graphics cards) is coming "
+                        "in a later version."));
         if (upscaler_available(UPSCALE_FSR4))  // (its own paragraph: the ones above keep their translations)
             uds += std::string("\n\n") + tr("AMD FSR 4: like FSR 3, but AMD's machine learning rebuilds the image. For AMD Radeon "
                                               "graphics cards on Windows. Sharpening sets its own sharpening.");
@@ -950,7 +954,7 @@ static void tab_display(void) {
         for (int i = 0; i < UPQ_COUNT; i++) {
             mode_names[i] = modes_ok ? tr(modes[i]) : std::string(tr(modes[i])) + " " + tr("(coming soon)");
             mn[i] = mode_names[i].c_str();
-            mavail[i] = modes_ok;
+            mavail[i] = modes_ok && upscale_mode_available(g_settings.upscaler, i);
         }
         float sx, sy;  // the 3D scene's size (BOTW docked: 1600 x 900 times its scale)
         renderer_get_scene_scale(&sx, &sy);
@@ -958,7 +962,9 @@ static void tab_display(void) {
         snprintf(rendering, sizeof rendering, tr("Rendering at %.0f x %.0f."), 1600.0 * sx, 900.0 * sy);
         std::string md = std::string(tr("How much smaller the game renders before the upscaler brings it to the window, "
                                         "on each side: Ultra Quality 1.3x, Quality 1.5x, Balanced 1.7x, Performance "
-                                        "2x, Ultra Performance 3x. Smaller is faster and softer.")) +
+                                        "2x, Ultra Performance 3x. Smaller is faster and softer.")) + "\n\n" +
+                         tr("Native AA (AMD FSR 3.1 and FSR 4): renders at the window's resolution and uses the upscaler "
+                            "only as anti-aliasing. The sharpest and steadiest image, at a GPU cost.") +
                          "\n\n" + (modes_ok ? rendering : tr("Coming in a later version."));
         opt_indent(1);
         if (g_settings.upscaler == UPSCALE_OFF) opt_disable_next();

@@ -1392,6 +1392,25 @@ extern "C" void launcher_run(const char *root, int mode) {
         pthread_detach(t);
     }
 
+    // SAVAGEWIND_AUTO_REBUILD=1 (tools/update.ps1 / update.sh start the game with it after an update): the game code
+    // built for the version before is built again at once from the files copied already - nothing is copied again,
+    // and the pieces whose C didn't change come from cache/gamecode/ (runtime/gamebuild.c). Once per process.
+    static bool auto_rebuilt;
+    if (const char *ar = getenv("SAVAGEWIND_AUTO_REBUILD"); ar && atoi(ar) && !auto_rebuilt && !g_busy &&
+        (status == "Game code built for another version" || status == "Game code not built yet") &&
+        check_copied_files(g_root).empty()) {
+        auto_rebuilt = true;
+        fprintf(stderr, "[launcher] %s: building the game code again from the copied files\n", status.c_str());
+        page = SETUP;
+        g_file_size.set_suspended(true);
+        pthread_mutex_lock(&g_lock);
+        g_src.clear();
+        g_busy = true;
+        pthread_mutex_unlock(&g_lock);
+        pthread_t t;
+        pthread_create(&t, NULL, extract_thread, NULL);
+        pthread_detach(t);
+    }
     static int runs;  // (test: =once - only the first time, so a "Title screen" reboot lands on the start screen)
     const char *ap = getenv("SAVAGEWIND_LAUNCHER_AUTOPLAY");
     if (ap && status.empty() && !(runs && !strcmp(ap, "once"))) play = true;  // (test: PLAY at once)

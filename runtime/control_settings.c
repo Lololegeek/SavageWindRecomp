@@ -27,7 +27,7 @@ typedef struct {
 static const Setting settings[] = {
     B(fullscreen), I(window_w, 0, 16384, NULL), I(window_h, 0, 16384, NULL),
     I(upscaler, 0, UPSCALE_COUNT - 1, "off|metalfx|fsr1|fsr3|dlss"),
-    I(upscale_quality, 0, UPQ_COUNT - 1, "ultra_quality|quality|balanced|performance|ultra_performance"),
+    I(upscale_quality, 0, UPQ_COUNT - 1, "ultra_quality|quality|balanced|performance|ultra_performance|native"),
     I(antialias, 0, AA_TAA, "off|smaa|taa"), B(game_fxaa), B(wet_fix),
     I(render_scale, 0, RSCALE_COUNT - 1, "50|75|100|125|150|200"),
     I(anisotropy, 0, 4, "game|2x|4x|8x|16x"), I(sharpening, 0, 10, NULL),
@@ -188,7 +188,7 @@ static void cmd_set(int argc, char **argv, ControlReply *r) {
         static const int fps[] = FPS_CHOICES;
         bool offered = false;
         for (unsigned i = 0; i < sizeof fps / sizeof fps[0]; i++) offered |= fps[i] == v;
-        if (!offered) { control_fail(r, "fps must be 0 (unlimited), 30, 60, 90, 120, 144, 165, 240 or 360"); return; }
+        if (!offered) { control_fail(r, "fps must be 0 (unlimited), 30, 60, 75, 90, 100, 120, 144, 165, 180, 200, 240, 280, 300, 360, 480, 540 or 720"); return; }
     }
     if (is(s, "hdr_white") && v != 0 && v < 80) {
         control_fail(r, "hdr_white must be 0 (automatic) or 80 to 1000 nits"); return;

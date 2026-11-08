@@ -10,7 +10,7 @@
 #include "input_bind.h"
 #include "language.h"
 
-bool fsr3_upscaler_enabled(void);  // (nvn/output_scale.c: FSR 3 upscaling held back for now)
+bool fsr3_upscaler_enabled(void);  // (nvn/output_scale.c: FSR 3.1 upscaling offered)
 
 #define SETTINGS_FILE settings_file()
 
@@ -85,7 +85,7 @@ static const char *const k_drawdist[DRAWDIST_COUNT] = {"original", "medium", "hi
 
 static const char *const k_icons[ICONS_COUNT] = {"auto", "keyboard", "xbox", "playstation", "nintendo"};
 
-static const char *const k_quality[UPQ_COUNT] = {"ultra_quality", "quality", "balanced", "performance", "ultra_performance"};
+static const char *const k_quality[UPQ_COUNT] = {"ultra_quality", "quality", "balanced", "performance", "ultra_performance", "native"};
 
 // Debug overrides seed this boot's options; the Controls switches can still change them at once.
 static void pc_controls_env(void) {
@@ -161,8 +161,8 @@ void settings_load(void) {
         }
         else if (!strcmp(key, "settings_version")) version = atoi(val);
         else if (!strcmp(key, "resolution")) snprintf(old_res, sizeof old_res, "%s", val);  // (version 1)
-        else if (!strcmp(key, "upscaler"))  // (metalfx / fsr1: this OS's spatial upscaler; fsr3, fsr4: Vulkan, held
-            // back for now: FSR 1 with the same quality mode, nvn/output_scale.c fsr3_upscaler_enabled; dlss: not yet)
+        else if (!strcmp(key, "upscaler"))  // (metalfx / fsr1: this OS's spatial upscaler; fsr3, fsr4: Vulkan, FSR 1
+            // with the same quality mode when SAVAGEWIND_FSR3=0, nvn/output_scale.c fsr3_upscaler_enabled; dlss: not yet)
             g_settings.upscaler = !strcmp(val, "fsr1") || !strcmp(val, "metalfx") ? UPSCALE_SPATIAL
                                 : !strcmp(val, "fsr3") ? (fsr3_upscaler_enabled() ? UPSCALE_FSR3_OR_SPATIAL : UPSCALE_SPATIAL)
                                 : !strcmp(val, "fsr4") ? (fsr3_upscaler_enabled() ? UPSCALE_FSR4_OR_SPATIAL : UPSCALE_SPATIAL)

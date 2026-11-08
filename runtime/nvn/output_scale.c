@@ -33,12 +33,11 @@
 bool fsr3_available(void);  // (vulkan/fsr3.h: built in)
 bool fsr4_available(void);  // (vulkan/fsr_api.h: AMD's DLLs, on an AMD Radeon)
 #endif
-// FSR 3 upscaling is held back until its cost on the thread that records the frame for Vulkan comes down (the draw
-// translation work in progress): today that thread limits 1080p and 1440p, and FSR 3's motion vectors make every mode
-// slower than native there. SAVAGEWIND_FSR3=1 offers it anyway (tests); TAA and frame generation stay as they are.
+// FSR 3.1 upscaling (and FSR 4 on Radeon) is offered. Where the thread that records the frame for Vulkan is the
+// limit (CPU-bound at 1080p/1440p) its motion vectors can cost more than they save: SAVAGEWIND_FSR3=0 hides it.
 bool fsr3_upscaler_enabled(void) {
     static int on = -1;
-    if (on < 0) on = getenv("SAVAGEWIND_FSR3") && atoi(getenv("SAVAGEWIND_FSR3")) != 0;
+    if (on < 0) on = !getenv("SAVAGEWIND_FSR3") || !*getenv("SAVAGEWIND_FSR3") || atoi(getenv("SAVAGEWIND_FSR3")) != 0;
     return on;
 }
 
@@ -47,7 +46,7 @@ bool upscaler_available(int u) {
     return u == UPSCALE_OFF || u == UPSCALE_METALFX;
 #else
     return u == UPSCALE_OFF || u == UPSCALE_FSR1 || (u == UPSCALE_FSR3 && fsr3_available() && fsr3_upscaler_enabled())
-        || (u == UPSCALE_FSR4 && fsr4_available() && fsr3_upscaler_enabled());  // (FSR 4: the same hold-back as FSR 3)
+        || (u == UPSCALE_FSR4 && fsr4_available() && fsr3_upscaler_enabled());  // (FSR 4: the same switch as FSR 3)
 #endif
 }
 
@@ -68,8 +67,8 @@ bool rt_fsr3(void) { return (g_settings.upscaler == UPSCALE_FSR3 && upscaler_ava
 bool rt_temporal(void) { return rt_antialias() == AA_TAA || rt_fsr3(); }
 
 double upscale_mode_factor(int q) {
-    static const double f[UPQ_COUNT] = {1.3, 1.5, 1.7, 2.0, 3.0};
-    return q == UPQ_COUNT ? 1.0 : q >= 0 && q < UPQ_COUNT ? f[q] : 1.5;  // (UPQ_COUNT: SAVAGEWIND_UPSCALE_AT fsr3-native)
+    static const double f[UPQ_COUNT] = {1.3, 1.5, 1.7, 2.0, 3.0, 1.0};  // (UPQ_NATIVE: Native AA)
+    return q >= 0 && q < UPQ_COUNT ? f[q] : 1.5;
 }
 
 // Rendering below the window's size: the 3D scene's render targets at their own scale (vulkan/textures.c). Metal has
@@ -84,10 +83,15 @@ bool upscale_modes_available(void) {
     return on;
 }
 
+// Native AA is FSR 3.1's (or FSR 4's) temporal anti-aliasing at full resolution: the spatial FSR 1 has no use for it
+bool upscale_mode_available(int u, int q) {
+    return q != UPQ_NATIVE || u == UPSCALE_FSR3 || u == UPSCALE_FSR4;
+}
+
 double upscale_factor(void) {
-    int u = g_settings.upscaler;
-    return u != UPSCALE_OFF && upscaler_available(u) && upscale_modes_available()
-               ? upscale_mode_factor(g_settings.upscale_quality) : 1.0;
+    int u = g_settings.upscaler, q = g_settings.upscale_quality;
+    if (!upscale_mode_available(u, q)) q = UPQ_QUALITY;  // (Native AA left chosen, then FSR 1: its Quality)
+    return u != UPSCALE_OFF && upscaler_available(u) && upscale_modes_available() ? upscale_mode_factor(q) : 1.0;
 }
 
 // The window's shape over 16:9 while the game's views are widened to fill it, else 1; the field of view's factor in

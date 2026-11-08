@@ -150,7 +150,7 @@ const int UPS_DEFAULT = 0;  // (UPSCALE_DEFAULT: Off, the window's resolution)
 #endif
 std::vector<int> g_shown;   // per item: the value shown instead of get(), one that can't be picked yet (-1: none)
 const char16_t GREY = 3;    // (the game's message colour for greyed values)
-const char *const k_modes[] = {"Ultra Quality", "Quality", "Balanced", "Performance", "Ultra Performance"};
+const char *const k_modes[] = {"Ultra Quality", "Quality", "Balanced", "Performance", "Ultra Performance", "Native AA"};
 #ifdef __APPLE__
 const char *const k_aa[] = {"Off", "SMAA"};
 #else
@@ -516,12 +516,16 @@ void build_items(void) {
                            if (g_settings.upscaler != UPSCALE_OFF) g_settings.upscale_quality = x;
                        },
                        UPQ_QUALITY);
-    mode.value_off = [](const Item &, int) { return !upscale_modes_available() || g_settings.upscaler == UPSCALE_OFF; };
+    mode.value_off = [](const Item &, int x) {
+        return !upscale_modes_available() || g_settings.upscaler == UPSCALE_OFF ||
+               !upscale_mode_available(g_settings.upscaler, x);
+    };
     mode.reset = [](const Item &) { g_settings.upscale_quality = UPQ_QUALITY; };  // (also while Off)
     mode.desc_fn = [](const Item &) {
         // (one line: the game's description pane is one English line wide)
         return !upscale_modes_available()           ? tr("Renders smaller, then upscales. Coming in a later version.")
                : g_settings.upscaler == UPSCALE_OFF ? tr("Only with an upscaler: choose one above first.")
+               : g_settings.upscale_quality == UPQ_NATIVE ? tr("Native AA: full resolution, FSR 3.1 as anti-aliasing.")
                                                     : tr("Ultra Quality is the sharpest, Ultra Performance the fastest.");
     };
     v.push_back(mode);

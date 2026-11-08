@@ -95,6 +95,11 @@ What's new is in [CHANGELOG.md](CHANGELOG.md).
 Coming from Alpha 4 (0.4.0): 0.4.1 is a quick fix update. Extract it over your Alpha 4 folder (Windows) or use the
 new AppImage (Linux): no new setup, everything stays.
 
+To update later versions in place, run `Update Savage Wind.bat` in your Savage Wind folder (Windows) or
+`tools/update.sh` (Linux AppImage): it downloads the newest release, replaces only Savage Wind's own files and keeps
+your game files, saves and settings. If the new version needs the game code built again, it's rebuilt from the files
+you copied already, without a new setup. See [Updating](docs/UPDATING.md).
+
 On Windows with an AMD card, if the window stays black after updating, reset AMD's shader cache once: in AMD Software:
 Adrenalin Edition go to Gaming > Graphics > Advanced and click Reset Shader Cache, then start Savage Wind again.
 AMD's driver can keep a damaged cache from an older version. Renaming the Savage Wind folder also gives the driver
