@@ -501,14 +501,14 @@ def measure(game, args, log_path, route, run_dir, tag):
     mem_first = mem_first if 'error' not in mem_first else {}
     if trace and not args.trace_from_boot:
         game.cmd('frametrace', 'start', ok=False)
-    th_a = game.cmd('threads')
+    th_a = game.cmd('threads', ok=False)  # (older builds have no `threads`: no CPU split then)
     polls, end = [], time.monotonic() + args.duration
     while time.monotonic() < end:  # (memstats once a second: a few tens of microseconds on the presenting thread)
         m = game.cmd('memstats', ok=False) if trace else {'error': 'off'}
         if 'error' not in m:
             polls.append(m)
         time.sleep(max(0.0, min(1.0, end - time.monotonic())))
-    th_b = game.cmd('threads')
+    th_b = game.cmd('threads', ok=False)
     trace_rel = 'build/frametrace_{}.csv'.format(os.getpid())
     dump = game.cmd('frametrace', 'dump', trace_rel, ok=False) if trace else {'error': 'off'}
     traced = 'error' not in dump
@@ -522,7 +522,7 @@ def measure(game, args, log_path, route, run_dir, tag):
     shot_rel = 'build/perf_routes_{}.png'.format(os.getpid())
     game.cmd('shot', shot_rel, ok=False)
     prof_at = os.path.getsize(log_path)
-    game.cmd('gpuprof')
+    game.cmd('gpuprof', ok=False)  # (older builds: only at startup, SAVAGEWIND_GPUPROF_AT)
     time.sleep(1.5)
     shot_dst = os.path.join(run_dir, '{}.png'.format(tag))
     try:
@@ -542,7 +542,7 @@ def measure(game, args, log_path, route, run_dir, tag):
         if game.poll(['sample', 'status'], ('done',), 120) == 'done':
             shares = sample_shares(args.tree, os.path.join(args.tree, 'build', 'samples.txt'))
 
-    presents = th_b['presents'] - th_a['presents']
+    presents = th_b['presents'] - th_a['presents'] if 'presents' in th_a and 'presents' in th_b else 0
     cpu = {k: (th_b[k] - th_a[k]) / presents for k in th_b
            if k in th_a and k not in ('now_ms', 'presents') and th_a[k] >= 0} if presents else {}
     rows, hitches = vk_lines(log_path, log_a, log_b)
