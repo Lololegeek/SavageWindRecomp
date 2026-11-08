@@ -35,11 +35,12 @@ bool fsr4_available(void);  // (vulkan/fsr_api.h: AMD's DLLs, on an AMD Radeon)
 #endif
 // FSR 3 upscaling is held back until its cost on the thread that records the frame for Vulkan comes down (the draw
 // translation work in progress): today that thread limits 1080p and 1440p, and FSR 3's motion vectors make every mode
-// slower than native there. SAVAGEWIND_FSR3=1 offers it anyway (tests); TAA and frame generation stay as they are.
+// slower than native there. Video > "AMD FSR 3 and FSR 4 upscaling (test)" (g_settings.fsr3_upscaling, off by default)
+// offers it anyway; SAVAGEWIND_FSR3=1 / =0 overrides that setting. TAA and frame generation stay as they are.
 bool fsr3_upscaler_enabled(void) {
-    static int on = -1;
-    if (on < 0) on = getenv("SAVAGEWIND_FSR3") && atoi(getenv("SAVAGEWIND_FSR3")) != 0;
-    return on;
+    static int env = -2;  // (-1: not set)
+    if (env == -2) env = getenv("SAVAGEWIND_FSR3") ? atoi(getenv("SAVAGEWIND_FSR3")) != 0 : -1;
+    return env >= 0 ? env : g_settings.fsr3_upscaling;
 }
 
 bool upscaler_available(int u) {

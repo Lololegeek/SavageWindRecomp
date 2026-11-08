@@ -1767,8 +1767,9 @@ built in, but Video > Upscaler doesn't offer it yet (`fsr3_upscaler_enabled` in 
 RTX 3060 the thread that records each frame for Vulkan limits 1080p and 1440p, and the motion vectors and FSR 3 add
 about 1.1 ms there, so every FSR 3 mode ran slower than native at those sizes; only at 4K did Balanced and up gain.
 It comes back once the draw translation on that thread runs in parallel (worked on apart, branch `heap-vram`).
-Until then `SAVAGEWIND_FSR3=1` offers it for tests, and a settings file with `upscaler = fsr3` loads as AMD FSR 1 with
-the same quality mode. TAA (Video > Anti-aliasing) and frame generation stay available.
+Until then Video > "AMD FSR 3 and FSR 4 upscaling (test)" (`fsr3_upscaling` in the settings file, off by default)
+offers it, as does `SAVAGEWIND_FSR3=1` (`=0` holds it back whatever the setting). Without either, a settings file with
+`upscaler = fsr3` or `fsr4` loads as AMD FSR 1 with the same quality mode. TAA (Video > Anti-aliasing) and frame generation stay available.
 
 ## Frame generation (AMD FSR 3)
 

@@ -902,6 +902,15 @@ static void tab_display(void) {
         // Values that can't be picked yet are shown greyed ("coming soon"); stepping onto them keeps the one in use.
         // The modes wait for render-target scaling (upscale_modes_available): until then the upscaler brings the
         // game's own 1920 x 1080 image to a bigger window.
+#ifndef __APPLE__
+        // FSR 3.1 / FSR 4 upscaling is held back (nvn/output_scale.c fsr3_upscaler_enabled): this offers it anyway
+        opt_toggle("AMD FSR 3 and FSR 4 upscaling (test)", &g_settings.fsr3_upscaling, false,
+                   "Offers AMD FSR 3 and FSR 4 in Upscaler below. They are held back for now: on many PCs they are "
+                   "still slower than the game at full resolution, while the work that records each frame for the "
+                   "graphics card is being sped up. Frame generation doesn't need it.");
+        if (!fsr3_upscaler_enabled() && (g_settings.upscaler == UPSCALE_FSR3 || g_settings.upscaler == UPSCALE_FSR4))
+            g_settings.upscaler = UPSCALE_SPATIAL;  // (turned off: back to FSR 1, with the same mode)
+#endif
         std::string fsr3 = upscaler_available(UPSCALE_FSR3) ? std::string(tr("AMD FSR 3"))
                                                             : std::string(tr("FSR 3")) + " " + tr("(coming soon)");
         std::string fsr4 = upscaler_available(UPSCALE_FSR4)
