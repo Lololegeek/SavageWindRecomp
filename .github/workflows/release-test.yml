@@ -1,0 +1,58 @@
+# Test release of this fork: builds the Windows release zip (make dist: no game code, no Nintendo data) on a tag
+# v*fps* and publishes it as a pre-release, so tools/update.ps1 can find it. Not part of the upstream PR.
+name: Release (test)
+
+on:
+  push:
+    tags: ['v*fps*']
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          path-type: inherit
+          install: >-
+            make zip mingw-w64-ucrt-x86_64-clang mingw-w64-ucrt-x86_64-lld mingw-w64-ucrt-x86_64-sdl3
+            mingw-w64-ucrt-x86_64-ffmpeg mingw-w64-ucrt-x86_64-vulkan-headers mingw-w64-ucrt-x86_64-vulkan-loader
+            mingw-w64-ucrt-x86_64-shaderc
+            mingw-w64-ucrt-x86_64-spirv-tools mingw-w64-ucrt-x86_64-pkgconf mingw-w64-ucrt-x86_64-nasm
+      - name: LGPL FFmpeg
+        run: make deps-windows
+      - name: Game code generator helper
+        run: make gen-helper GEN_PY="$(cygpath -u "$pythonLocation")/python.exe"
+      - name: Compiler and AMD FSR DLLs
+        run: |
+          tools/fetch_zig.sh
+          "$(cygpath -u "$pythonLocation")/python.exe" tools/fetch_fsr_dlls.py
+      - name: Release zip
+        run: make -j$(nproc) dist
+      - name: Publish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $zip = Get-ChildItem build/dist/SavageWind-*-windows.zip | Select-Object -First 1
+          $notes = @"
+          Test build of the fps-fsr-updater branch ($env:GITHUB_SHA). No game files and no game code inside: the start screen sets them up from your own copy, as before.
+
+          - Frame rate: 144, 165, 180, 200, 240, 280, 300, 360; 480 / 540 / 720 with Frame generation.
+          - Upscaler mode Native AA (FSR 3.1 / FSR 4 as anti-aliasing at full resolution).
+          - FSR 3.1 / FSR 4 upscaling is held back by default as on test: start with SAVAGEWIND_FSR3=1 to offer it.
+          - Updater: Update Savage Wind.bat in the folder (docs/UPDATING.md). Over an existing install: extract this zip over it, or run the .bat.
+          "@
+          gh release create $env:GITHUB_REF_NAME $zip.FullName --prerelease --title "Test $env:GITHUB_REF_NAME" --notes $notes
