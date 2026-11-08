@@ -32,6 +32,10 @@ Options (pass them to the `.bat` or to `update.ps1`):
 
 The version installed is written to `savagewind-version.txt`.
 
+No GitHub account or token is needed: the releases are public, read through GitHub's API without signing in. That
+API allows 60 requests an hour per IP address, and a check uses one or two; if you hit the limit (on a shared
+network), a token in `GITHUB_TOKEN` raises it, and nothing else uses it.
+
 If the folder is older than the updater, copy `tools\update.ps1` and `tools\Update Savage Wind.bat` next to
 `savagewind.exe` once.
 
