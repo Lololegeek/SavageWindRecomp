@@ -927,8 +927,7 @@ static void tab_display(void) {
                         "following the game's motion: sharper and steadier than FSR 1, and anti-aliased (Anti-aliasing "
                         "has no effect with it). Sharpening sets its own sharpening. NVIDIA DLSS (NVIDIA RTX graphics "
                         "cards) is coming in a later version.")
-                   : tr("AMD FSR 3 is turned off (SAVAGEWIND_FSR3=0). NVIDIA DLSS (NVIDIA RTX graphics cards) is coming "
-                        "in a later version."));
+                   : tr("AMD FSR 3 and NVIDIA DLSS (NVIDIA RTX graphics cards) are coming in a later version."));
         if (upscaler_available(UPSCALE_FSR4))  // (its own paragraph: the ones above keep their translations)
             uds += std::string("\n\n") + tr("AMD FSR 4: like FSR 3, but AMD's machine learning rebuilds the image. For AMD Radeon "
                                               "graphics cards on Windows. Sharpening sets its own sharpening.");
