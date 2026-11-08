@@ -55,8 +55,19 @@ function Installed-Version {
     try {
         $bytes = [IO.File]::ReadAllBytes($exe)
         $text = [Text.Encoding]::ASCII.GetString($bytes)
-        $m = [regex]::Match($text, "\x00(\d+\.\d+\.\d+(?:-[A-Za-z0-9.]+)?)\x00")
+        # The exe also holds other x.y.z strings (the game's own "1.9.0"), and the compiler can pack the version right
+        # after other constants with no NUL in between ("...dda70.4.1-alpha.4"), so: the string the linker places
+        # before "/" and "file://" (the updater's own strings), with a one-digit major.
+        $m = [regex]::Match($text, "(\d\.\d+\.\d+(?:-[A-Za-z0-9.]+)?)\x00/\x00file://")
         if ($m.Success) { return $m.Groups[1].Value }
+    } catch {}
+    # The startup log's first line: "[savagewind] Savage Wind <version> (commit ..."
+    $log = Join-Path $InstallDir "savagewind.log"
+    try {
+        if (Test-Path -LiteralPath $log) {
+            $m = [regex]::Match((Get-Content -LiteralPath $log -TotalCount 5) -join "`n", "Savage Wind (\d+\.\d+\.\d+(?:-[A-Za-z0-9.]+)?) \(commit")
+            if ($m.Success) { return $m.Groups[1].Value }
+        }
     } catch {}
     return "unknown"
 }
