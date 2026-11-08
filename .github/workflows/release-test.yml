@@ -32,7 +32,11 @@ jobs:
             mingw-w64-ucrt-x86_64-shaderc
             mingw-w64-ucrt-x86_64-spirv-tools mingw-w64-ucrt-x86_64-pkgconf mingw-w64-ucrt-x86_64-nasm
       - name: LGPL FFmpeg
-        run: make deps-windows
+        run: |
+          mkdir -p build/deps-win/src  # (fetched ahead with retries: ffmpeg.org resets connections; the script checks its hash)
+          curl -fSL --retry 8 --retry-all-errors --retry-delay 10 -o build/deps-win/src/ffmpeg-9.0.2.tar.xz \
+              https://ffmpeg.org/releases/ffmpeg-9.0.2.tar.xz
+          make deps-windows
       - name: Game code generator helper
         run: make gen-helper GEN_PY="$(cygpath -u "$pythonLocation")/python.exe"
       - name: Compiler and AMD FSR DLLs
